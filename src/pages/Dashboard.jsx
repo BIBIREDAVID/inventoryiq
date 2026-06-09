@@ -1,13 +1,11 @@
-import { useAuth } from "../context/AuthContext";
-
 const STATS = ["Total Products", "Low Stock Alerts", "Pending Orders", "Total Locations"];
 
 export default function Dashboard() {
-  const { currentUser } = useAuth();
   return (
     <div>
       <div className="mb-6">
-        <p className="text-slate-400 text-sm">Welcome back, <span className="text-white font-medium">{currentUser?.email}</span></p>
+        <h2 className="text-xl font-bold text-white">Dashboard</h2>
+        <p className="text-slate-400 text-sm mt-1">Welcome to InventoryIQ</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {STATS.map((label) => (
