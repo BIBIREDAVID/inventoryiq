@@ -6,7 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(undefined); // undefined = still checking
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,8 +23,12 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        setUserRole(snap.exists() ? snap.data().role : null);
+        try {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          setUserRole(snap.exists() ? snap.data().role : null);
+        } catch {
+          setUserRole(null);
+        }
       } else {
         setUserRole(null);
       }
