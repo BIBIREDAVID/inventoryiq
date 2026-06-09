@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 const STATS = ["Total Products", "Low Stock Alerts", "Pending Orders", "Total Locations"];
 
 export default function Dashboard() {
-  const { currentUser, userRole } = useAuth();
+  const { currentUser } = useAuth();
   return (
     <div>
       <div className="mb-6">
