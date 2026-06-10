@@ -8,6 +8,8 @@ import SuppliersPage from "./pages/suppliers/SuppliersPage";
 import PurchaseOrdersPage from "./pages/orders/PurchaseOrdersPage";
 import AdjustmentsPage from "./pages/adjustments/AdjustmentsPage";
 import ReportsPage from "./pages/reports/ReportsPage";
+import UsersPage from "./pages/users/UsersPage";
+import SettingsPage from "./pages/settings/SettingsPage";
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
           <Route path="orders" element={<PurchaseOrdersPage />} />
           <Route path="adjustments" element={<AdjustmentsPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
