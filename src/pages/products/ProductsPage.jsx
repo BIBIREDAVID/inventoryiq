@@ -6,12 +6,15 @@ import {
 } from "firebase/firestore";
 import ProductModal from "../../components/products/ProductModal";
 import BarcodeScanner from "../../components/products/BarcodeScanner";
+import { exportToCSV } from "../../utils/exportCSV";
+import CSVImport from "../../components/products/CSVImport";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,6 +46,17 @@ export default function ProductsPage() {
     if (window.confirm("Delete this product?")) {
       await deleteDoc(doc(db, "products", id));
     }
+  }
+
+  async function handleDuplicate(product) {
+    const { id, createdAt, ...data } = product;
+    await addDoc(collection(db, "products"), {
+      ...data,
+      name: `${data.name} (Copy)`,
+      sku: `${data.sku}-COPY`,
+      stockQty: 0,
+      createdAt: serverTimestamp(),
+    });
   }
 
   function openEdit(product) {
@@ -77,6 +91,24 @@ export default function ProductsPage() {
           <button onClick={openAdd}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
             + Add Product
+          </button>
+          <button onClick={() => exportToCSV("products", products.map((p) => ({
+              Name: p.name,
+              SKU: p.sku,
+              UPC: p.upc || "",
+              Category: p.category || "",
+              Unit: p.unitOfMeasure || "",
+              "Cost Price": p.costPrice || 0,
+              "Selling Price": p.sellingPrice || 0,
+              "Stock Qty": p.stockQty || 0,
+              "Reorder Point": p.reorderPoint || 0,
+            })))}
+              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition">
+              ↓ Export CSV
+            </button>
+          <button onClick={() => setCsvImportOpen(true)}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition">
+            ↑ Import CSV
           </button>
         </div>
       </div>
@@ -141,6 +173,8 @@ export default function ProductsPage() {
                   <div className="flex gap-2">
                     <button onClick={() => openEdit(p)}
                       className="text-xs text-indigo-400 hover:text-indigo-300 transition">Edit</button>
+                    <button onClick={() => handleDuplicate(p)}
+                      className="text-xs text-slate-400 hover:text-white transition">Copy</button>
                     <button onClick={() => handleDelete(p.id)}
                       className="text-xs text-red-400 hover:text-red-300 transition">Delete</button>
                   </div>
@@ -164,6 +198,7 @@ export default function ProductsPage() {
           onClose={() => setScannerOpen(false)}
         />
       )}
+      {csvImportOpen && <CSVImport onClose={() => setCsvImportOpen(false)} />}
     </div>
   );
 }

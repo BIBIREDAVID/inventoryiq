@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "../../firebase/config";
 import {
-  collection, addDoc, doc,
+  collection, addDoc, doc, updateDoc,
   onSnapshot, serverTimestamp, writeBatch, increment
 } from "firebase/firestore";
 
@@ -133,9 +133,17 @@ export default function PurchaseOrdersPage() {
                   <div className="flex gap-2">
                     <button onClick={() => setViewOrder(o)}
                       className="text-xs text-indigo-400 hover:text-indigo-300">View</button>
+                    {o.status === "Draft" && (
+                      <button onClick={() => updateDoc(doc(db, "purchaseOrders", o.id), { status: "Sent" })}
+                        className="text-xs text-blue-400 hover:text-blue-300">Mark Sent</button>
+                    )}
                     {o.status === "Sent" && (
                       <button onClick={() => handleReceive(o)}
                         className="text-xs text-emerald-400 hover:text-emerald-300">Receive</button>
+                    )}
+                    {(o.status === "Draft" || o.status === "Sent") && (
+                      <button onClick={() => updateDoc(doc(db, "purchaseOrders", o.id), { status: "Cancelled" })}
+                        className="text-xs text-red-400 hover:text-red-300">Cancel</button>
                     )}
                   </div>
                 </td>

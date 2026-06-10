@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "../../firebase/config";
 import { collection, onSnapshot } from "firebase/firestore";
+import { exportToCSV } from "../../utils/exportCSV";
 
 export default function ReportsPage() {
   const [products, setProducts] = useState([]);
@@ -22,6 +23,22 @@ export default function ReportsPage() {
     );
     return () => { u1(); u2(); u3(); };
   }, []);
+
+    <div className="flex justify-end mb-3">
+    <button onClick={() => exportToCSV("stock-report", products.map((p) => ({
+        Name: p.name,
+        SKU: p.sku,
+        Category: p.category || "",
+        "Stock Qty": p.stockQty || 0,
+        "Cost Price": p.costPrice || 0,
+        "Selling Price": p.sellingPrice || 0,
+        "Stock Value": (p.stockQty || 0) * (p.costPrice || 0),
+        Status: (p.stockQty || 0) <= 0 ? "Out of Stock" : (p.stockQty || 0) <= (p.reorderPoint || 0) ? "Low Stock" : "In Stock",
+    })))}
+        className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition">
+        ↓ Export CSV
+    </button>
+    </div>
 
   const totalStockValue = products.reduce((sum, p) => sum + ((p.stockQty || 0) * (p.costPrice || 0)), 0);
   const totalRetailValue = products.reduce((sum, p) => sum + ((p.stockQty || 0) * (p.sellingPrice || 0)), 0);
