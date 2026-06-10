@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { storage } from "../../firebase/config";
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 
 const CATEGORIES = ["Electronics", "Clothing", "Food & Beverage", "Hardware", "Stationery", "Furniture", "Other"];
 const UNITS = ["each", "box", "kg", "litre", "pair", "set", "roll", "pack"];
@@ -7,11 +9,15 @@ const EMPTY = {
   name: "", sku: "", upc: "", category: "", unitOfMeasure: "each",
   costPrice: "", sellingPrice: "", reorderPoint: "", reorderQty: "",
   supplierId: "", leadTimeDays: "", description: "", stockQty: 0,
+  imageUrl: "",
 };
 
 export default function ProductModal({ product, onSave, onClose }) {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -33,22 +39,38 @@ export default function ProductModal({ product, onSave, onClose }) {
     return e;
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
-    setSaving(true);
-    await onSave({
-      ...form,
-      costPrice: Number(form.costPrice) || 0,
-      sellingPrice: Number(form.sellingPrice) || 0,
-      reorderPoint: Number(form.reorderPoint) || 0,
-      reorderQty: Number(form.reorderQty) || 0,
-      leadTimeDays: Number(form.leadTimeDays) || 0,
-      stockQty: Number(form.stockQty) || 0,
+async function handleSubmit(e) {
+  e.preventDefault();
+  const errs = validate();
+  if (Object.keys(errs).length) { setErrors(errs); return; }
+  setSaving(true);
+
+  let imageUrl = form.imageUrl || "";
+
+  if (imageFile) {
+    const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
+    await new Promise((resolve, reject) => {
+      const task = uploadBytesResumable(storageRef, imageFile);
+      task.on("state_changed",
+        (snap) => setUploadProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+        reject,
+        async () => { imageUrl = await getDownloadURL(task.snapshot.ref); resolve(); }
+      );
     });
-    setSaving(false);
   }
+
+  await onSave({
+    ...form,
+    imageUrl,
+    costPrice: Number(form.costPrice) || 0,
+    sellingPrice: Number(form.sellingPrice) || 0,
+    reorderPoint: Number(form.reorderPoint) || 0,
+    reorderQty: Number(form.reorderQty) || 0,
+    leadTimeDays: Number(form.leadTimeDays) || 0,
+    stockQty: Number(form.stockQty) || 0,
+  });
+  setSaving(false);
+}
 
   const Field = ({ label, field, type = "text", placeholder = "" }) => (
     <div>
@@ -124,6 +146,39 @@ export default function ProductModal({ product, onSave, onClose }) {
             </div>
           </div>
 
+          {/* Image Upload */}
+<div className="sm:col-span-2">
+  <label className="block text-xs font-medium text-slate-400 mb-1">Product Image</label>
+  <div className="flex items-center gap-4">
+    <div className="w-16 h-16 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+      {(imagePreview || form.imageUrl)
+        ? <img src={imagePreview || form.imageUrl} alt="preview" className="w-full h-full object-cover" />
+        : <span className="text-2xl">📦</span>
+      }
+    </div>
+    <div className="flex-1">
+      <input type="file" accept="image/*" id="img-upload" className="hidden"
+        onChange={(e) => {
+          const file = e.target.files[0];
+          if (file) {
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+          }
+        }}
+      />
+        <label htmlFor="img-upload"
+          className="cursor-pointer px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition inline-block">
+          Choose Image
+        </label>
+        {uploadProgress > 0 && uploadProgress < 100 && (
+          <div className="mt-2 w-full bg-slate-700 rounded-full h-1.5">
+            <div className="bg-indigo-500 h-1.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+          </div>
+        )}
+        <p className="text-slate-500 text-xs mt-1">JPG, PNG up to 5MB</p>
+      </div>
+    </div>
+  </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose}
               className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 text-sm hover:bg-slate-700/50 transition">

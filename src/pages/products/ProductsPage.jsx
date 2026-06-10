@@ -112,8 +112,18 @@ export default function ProductsPage() {
             {filtered.map((p) => (
               <tr key={p.id} className="border-b border-slate-700/30 hover:bg-slate-700/20 transition">
                 <td className="px-4 py-3">
-                  <p className="text-white font-medium">{p.name}</p>
-                  <p className="text-slate-500 text-xs">{p.upc || "No UPC"}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {p.imageUrl
+                        ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                        : <span className="text-base">📦</span>
+                      }
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">{p.name}</p>
+                      <p className="text-slate-500 text-xs">{p.upc || "No UPC"}</p>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-slate-300 font-mono text-xs">{p.sku}</td>
                 <td className="px-4 py-3">
